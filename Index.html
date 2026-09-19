@@ -131,6 +131,8 @@ const CARDS = [{"id": "Team_Badges-0", "num": "1", "name": "Team Badge", "team":
   const PERSON_COLORS = ["#e11d48", "#2563eb", "#059669", "#d97706"];
   const DEFAULT_PEOPLE = ["Adam", "Ben", "Nathan", "Shane"];
   const CONFIG_KEY = "pl_checklist_supabase_config";
+  const DEFAULT_SUPABASE_URL = "https://rjkzrliueshrylefxpns.supabase.co";
+  const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqa3pybGl1ZXNocnlsZWZ4cG5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MDgxMjgsImV4cCI6MjEwNDA4NDEyOH0.S_tNLLZoJxrQshrtsHjIJTGs1y2FAQQh6936aR7j7YU";
   const LOCAL_CACHE_KEY = "pl_checklist_supabase_cache";
   const ROW_ID = "main";
 
@@ -204,9 +206,12 @@ const CARDS = [{"id": "Team_Badges-0", "num": "1", "name": "Team Badge", "team":
   function loadConfig() {
     try {
       const raw = localStorage.getItem(CONFIG_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    if (DEFAULT_SUPABASE_URL && DEFAULT_SUPABASE_KEY) {
+      return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_KEY };
+    }
+    return null;
   }
   function saveConfig(cfg) {
     try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); } catch (e) {}
@@ -437,7 +442,6 @@ const CARDS = [{"id": "Team_Badges-0", "num": "1", "name": "Team Badge", "team":
 
   loadLocalCache();
   renderAll();
-  if (!loadConfig()) { openSetup(); }
   initSupabase();
 })();
 </script>
