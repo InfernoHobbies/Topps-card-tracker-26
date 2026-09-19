@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>2025/26 Topps Premier League Checklist</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --bg:#f5f6f8; --card-bg:#ffffff; --text:#16181d; --text-dim:#6b7280;
+    --border:#e5e7eb; --accent:#37003c; --accent-2:#00ff87; --track:#eef0f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0f1115; --card-bg:#1a1d24; --text:#f0f1f3; --text-dim:#9aa0aa;
+      --border:#2a2e37; --accent:#b985ff; --accent-2:#00ff87; --track:#232631;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0f1115; --card-bg:#1a1d24; --text:#f0f1f3; --text-dim:#9aa0aa;
+    --border:#2a2e37; --accent:#b985ff; --accent-2:#00ff87; --track:#232631;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    width:100%; overflow-x:hidden; }
+  .app { max-width:720px; margin:0 auto; padding:12px 12px 60px; }
+  header.top { position:sticky; top:0; z-index:20; background:linear-gradient(135deg,var(--accent),#6a1b9a);
+    color:#fff; padding:14px 16px 12px; border-radius:0 0 16px 16px; margin:-12px -12px 14px; }
+  header.top h1 { margin:0 0 2px; font-size:1.0rem; font-weight:800; letter-spacing:-0.2px; display:flex; justify-content:space-between; align-items:center; }
+  header.top h1 .gear { font-size:0.9rem; cursor:pointer; opacity:0.85; background:rgba(255,255,255,0.15); border-radius:8px; padding:3px 8px; }
+  header.top p { margin:0; font-size:0.72rem; opacity:0.85; }
+  .people-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:10px; }
+  .person-chip { background:rgba(255,255,255,0.12); border-radius:10px; padding:6px 6px;
+    display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .person-chip input { width:100%; text-align:center; background:transparent; border:none; color:#fff;
+    font-size:0.66rem; font-weight:700; outline:none; border-bottom:1px solid rgba(255,255,255,0.35); padding:2px 0; }
+  .person-chip .pct { font-size:0.58rem; opacity:0.9; }
+  .person-swatch { width:18px; height:4px; border-radius:2px; }
+  .overall { margin-top:10px; background:rgba(255,255,255,0.12); border-radius:10px; padding:8px 10px; font-size:0.7rem; }
+  .overall .bar-track { height:6px; border-radius:4px; background:rgba(255,255,255,0.25); margin-top:5px; overflow:hidden; }
+  .overall .bar-fill { height:100%; background:var(--accent-2); border-radius:4px; transition:width .25s; }
+  .controls { display:flex; gap:8px; margin-bottom:10px; position:sticky; top:150px; z-index:15; background:var(--bg); padding:6px 0; flex-wrap:wrap; }
+  .controls input[type="search"] { flex:1 1 100%; padding:9px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card-bg); color:var(--text); font-size:0.85rem; outline:none; min-width:120px; }
+  .club-select { flex:1 1 100%; padding:10px 10px; border-radius:10px; border:2px solid var(--accent);
+    background:var(--card-bg); color:var(--text); font-size:0.88rem; font-weight:700; }
+  .controls select.filter-select { flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card-bg); color:var(--text); font-size:0.75rem; }
+  .list-wrap { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .col-labels { display:grid; grid-template-columns:34px 1fr repeat(4,32px); gap:4px; padding:8px 12px 4px;
+    font-size:0.58rem; color:var(--text-dim); font-weight:700; position:sticky; top:200px; background:var(--card-bg); z-index:10; }
+  .col-labels span { text-align:center; }
+  .col-labels span:nth-child(2) { text-align:left; }
+  .card-row { display:grid; grid-template-columns:34px 1fr repeat(4,32px); gap:4px; align-items:center; padding:7px 12px; border-top:1px solid var(--border); }
+  .card-row:first-of-type { border-top:none; }
+  .card-row.is-badge { background:var(--track); }
+  .card-num { font-size:0.62rem; color:var(--text-dim); text-align:right; }
+  .card-name { font-size:0.78rem; line-height:1.15; display:flex; flex-direction:column; }
+  .card-name .sub-tag { font-size:0.6rem; color:var(--text-dim); }
+  .card-name .sub-tag .team-part { color:var(--accent); font-weight:600; }
+  .toggle { width:28px; height:28px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg);
+    display:flex; align-items:center; justify-content:center; font-size:0.8rem; color:transparent; margin:0 auto; cursor:pointer; }
+  .toggle.on { color:#fff; border-color:transparent; }
+  footer.note { text-align:center; font-size:0.66rem; color:var(--text-dim); margin-top:18px; padding:0 20px; line-height:1.4; }
+  .sync-flag { text-align:center; font-size:0.63rem; color:var(--text-dim); margin-bottom:8px; }
+  .empty-msg { padding:20px; text-align:center; color:var(--text-dim); font-size:0.8rem; }
+
+  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:50; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal { background:var(--card-bg); border-radius:16px; padding:20px; max-width:420px; width:100%; }
+  .modal h2 { margin:0 0 8px; font-size:1.0rem; }
+  .modal p { font-size:0.78rem; color:var(--text-dim); line-height:1.5; margin:0 0 12px; }
+  .modal label { font-size:0.72rem; font-weight:700; display:block; margin-bottom:4px; }
+  .modal input { width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:0.82rem; margin-bottom:12px; }
+  .modal button { width:100%; padding:11px; border-radius:10px; border:none; background:var(--accent); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; }
+  .modal .hint { font-size:0.66rem; color:var(--text-dim); margin-top:10px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>&#9917; 2025/26 Topps Premier League <span class="gear" id="gearBtn">&#9881;</span></h1>
+    <p id="headerCount">Loading checklist&hellip;</p>
+    <div class="people-row" id="peopleRow"></div>
+    <div class="overall" id="overallBox">
+      <div id="overallText">Loading shared progress&hellip;</div>
+      <div class="bar-track"><div class="bar-fill" id="overallFill" style="width:0%"></div></div>
+    </div>
+  </header>
+
+  <div class="sync-flag" id="syncFlag">Connecting&hellip;</div>
+
+  <div class="controls">
+    <select class="club-select" id="clubSelect"><option value="all">All clubs</option></select>
+    <select class="club-select" id="setSelect"><option value="all">All sets</option></select>
+    <input type="search" id="searchBox" placeholder="Search player&hellip;">
+    <select class="filter-select" id="filterSelect">
+      <option value="all">All cards</option>
+      <option value="missing">Anyone missing</option>
+      <option value="complete">Everyone has it</option>
+    </select>
+  </div>
+
+  <div class="list-wrap">
+    <div class="col-labels" id="colLabels"></div>
+    <div id="listBody"></div>
+  </div>
+
+  <footer class="note">
+    2025/26 Topps Premier League checklist &mdash; base set + common/chase inserts, ordered by card number. Synced through your own Supabase project, so everyone taps the same shared checklist regardless of which account they're signed into.
+  </footer>
+</div>
+
+<div class="modal-backdrop" id="setupModal" style="display:none;">
+  <div class="modal">
+    <h2>Connect your Supabase project</h2>
+    <p>This checklist stores its shared data in a Supabase table so all four of you see the same ticks, no matter what account you're on. Paste your project's URL and anon key below (see the setup notes in chat for the one-time table setup).</p>
+    <label for="supaUrl">Project URL</label>
+    <input type="text" id="supaUrl" placeholder="https://xxxxx.supabase.co">
+    <label for="supaKey">Anon public key</label>
+    <input type="text" id="supaKey" placeholder="eyJhbGciOi...">
+    <button id="saveConfigBtn">Save &amp; connect</button>
+    <div class="hint">Saved only in this browser (localStorage). Each person enters this once on their own device.</div>
+  </div>
+</div>
+
+<script>
+const CARDS = [{"id": "Team_Badges-0", "num": "1", "name": "Team Badge", "team": "Arsenal", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-0", "num": "2", "name": "Raya", "team": "Arsenal", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-1", "num": "3", "name": "Saliba", "team": "Arsenal", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-2", "num": "4", "name": "Magalhães", "team": "Arsenal", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-3", "num": "5", "name": "Timber", "team": "Arsenal", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-4", "num": "6", "name": "Merino", "team": "Arsenal", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-5", "num": "7", "name": "Partey", "team": "Arsenal", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-6", "num": "8", "name": "Rice", "team": "Arsenal", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-7", "num": "9", "name": "Lewis-Skelly", "team": "Arsenal", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-8", "num": "10", "name": "Ødegaard", "team": "Arsenal", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-9", "num": "11", "name": "Nwaneri", "team": "Arsenal", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-10", "num": "12", "name": "Saka", "team": "Arsenal", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-11", "num": "13", "name": "Martinelli", "team": "Arsenal", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-12", "num": "14", "name": "Trossard", "team": "Arsenal", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-13", "num": "15", "name": "Havertz", "team": "Arsenal", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-0", "num": "16", "name": "Martinelli", "team": "Arsenal", "pos": "F", "subset": "Generation Now"}, {"id": "Full_Force-0", "num": "17", "name": "Timber", "team": "Arsenal", "pos": "D", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-0", "num": "18", "name": "Lewis-Skelly", "team": "Arsenal", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-1", "num": "19", "name": "Team Badge", "team": "Aston Villa", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-14", "num": "20", "name": "Martínez", "team": "Aston Villa", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-15", "num": "21", "name": "Torres", "team": "Aston Villa", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-16", "num": "22", "name": "Konsa", "team": "Aston Villa", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-17", "num": "23", "name": "Cash", "team": "Aston Villa", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-18", "num": "24", "name": "Digne", "team": "Aston Villa", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-19", "num": "25", "name": "Kamara", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-20", "num": "26", "name": "Onana", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-21", "num": "27", "name": "McGinn", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-22", "num": "28", "name": "Tielemans", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-23", "num": "29", "name": "Ramsey", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-24", "num": "30", "name": "Rogers", "team": "Aston Villa", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-25", "num": "31", "name": "Barry", "team": "Aston Villa", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-26", "num": "32", "name": "Malen", "team": "Aston Villa", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-27", "num": "33", "name": "Watkins", "team": "Aston Villa", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-1", "num": "34", "name": "Kamara", "team": "Aston Villa", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-1", "num": "35", "name": "McGinn", "team": "Aston Villa", "pos": "M", "subset": "Full Force"}, {"id": "Tekkers-0", "num": "36", "name": "Malen", "team": "Aston Villa", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-2", "num": "37", "name": "Team Badge", "team": "AFC Bournemouth", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-28", "num": "38", "name": "Arrizabalaga", "team": "AFC Bournemouth", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-29", "num": "39", "name": "Zabarnyi", "team": "AFC Bournemouth", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-30", "num": "40", "name": "Huijsen", "team": "AFC Bournemouth", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-31", "num": "41", "name": "Soler", "team": "AFC Bournemouth", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-32", "num": "42", "name": "Kerkez", "team": "AFC Bournemouth", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-33", "num": "43", "name": "Adams", "team": "AFC Bournemouth", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-34", "num": "44", "name": "Cook", "team": "AFC Bournemouth", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-35", "num": "45", "name": "Christie", "team": "AFC Bournemouth", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-36", "num": "46", "name": "Sinisterra", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-37", "num": "47", "name": "Semenyo", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-38", "num": "48", "name": "Kluivert", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-39", "num": "49", "name": "Kroupi", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-40", "num": "50", "name": "Ouattara", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-41", "num": "51", "name": "Evanilson", "team": "AFC Bournemouth", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-2", "num": "52", "name": "Kerkez", "team": "AFC Bournemouth", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-2", "num": "53", "name": "Zabarnyi", "team": "AFC Bournemouth", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-1", "num": "54", "name": "Kluivert", "team": "AFC Bournemouth", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-3", "num": "55", "name": "Team Badge", "team": "Brentford", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-42", "num": "56", "name": "Flekken", "team": "Brentford", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-43", "num": "57", "name": "Collins", "team": "Brentford", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-44", "num": "58", "name": "van den Berg", "team": "Brentford", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-45", "num": "59", "name": "Kayode", "team": "Brentford", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-46", "num": "60", "name": "Nørgaard", "team": "Brentford", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-47", "num": "61", "name": "Jensen", "team": "Brentford", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-48", "num": "62", "name": "Janelt", "team": "Brentford", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-49", "num": "63", "name": "Damsgaard", "team": "Brentford", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-50", "num": "64", "name": "Carvalho", "team": "Brentford", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-51", "num": "65", "name": "Schade", "team": "Brentford", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-52", "num": "66", "name": "Lewis-Potter", "team": "Brentford", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-53", "num": "67", "name": "Nunes", "team": "Brentford", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-54", "num": "68", "name": "Mbeumo", "team": "Brentford", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-55", "num": "69", "name": "Wissa", "team": "Brentford", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-3", "num": "70", "name": "Carvalho", "team": "Brentford", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-3", "num": "71", "name": "Nunes", "team": "Brentford", "pos": "F", "subset": "Full Force"}, {"id": "Tekkers-2", "num": "72", "name": "Schade", "team": "Brentford", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-4", "num": "73", "name": "Team Badge", "team": "Brighton & Hove Albion", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-56", "num": "74", "name": "Verbruggen", "team": "Brighton & Hove Albion", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-57", "num": "75", "name": "van Hecke", "team": "Brighton & Hove Albion", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-58", "num": "76", "name": "Estupiñán", "team": "Brighton & Hove Albion", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-59", "num": "77", "name": "Dunk", "team": "Brighton & Hove Albion", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-60", "num": "78", "name": "Hinshelwood", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-61", "num": "79", "name": "Minteh", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-62", "num": "80", "name": "Baleba", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-63", "num": "81", "name": "Do-young", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-64", "num": "82", "name": "Ayari", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-65", "num": "83", "name": "Mitoma", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-66", "num": "84", "name": "Tzimas", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-67", "num": "85", "name": "Welbeck", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-68", "num": "86", "name": "Rutter", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-69", "num": "87", "name": "Pedro", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-4", "num": "88", "name": "O'Riley", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-4", "num": "89", "name": "Baleba", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Full Force"}, {"id": "Tekkers-3", "num": "90", "name": "O'Riley", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Tekkers"}, {"id": "Team_Badges-5", "num": "91", "name": "Team Badge", "team": "Chelsea", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-70", "num": "92", "name": "Sánchez", "team": "Chelsea", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-71", "num": "93", "name": "Colwill", "team": "Chelsea", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-72", "num": "94", "name": "Adarabioyo", "team": "Chelsea", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-73", "num": "95", "name": "James", "team": "Chelsea", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-74", "num": "96", "name": "Cucurella", "team": "Chelsea", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-75", "num": "97", "name": "Murray-Campbell", "team": "Chelsea", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-76", "num": "98", "name": "Caicedo", "team": "Chelsea", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-77", "num": "99", "name": "Fernández", "team": "Chelsea", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-78", "num": "100", "name": "Palmer", "team": "Chelsea", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-79", "num": "101", "name": "Páez", "team": "Chelsea", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-80", "num": "102", "name": "Neto", "team": "Chelsea", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-81", "num": "103", "name": "Madueke", "team": "Chelsea", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-82", "num": "104", "name": "Jackson", "team": "Chelsea", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-83", "num": "105", "name": "Estêvão", "team": "Chelsea", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-5", "num": "106", "name": "Colwill", "team": "Chelsea", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-5", "num": "107", "name": "Cucurella", "team": "Chelsea", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-4", "num": "108", "name": "Madueke", "team": "Chelsea", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-6", "num": "109", "name": "Team Badge", "team": "Crystal Palace", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-84", "num": "110", "name": "Henderson", "team": "Crystal Palace", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-85", "num": "111", "name": "Mitchell", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-86", "num": "112", "name": "Riad", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-87", "num": "113", "name": "Lacroix", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-88", "num": "114", "name": "Guéhi", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-89", "num": "115", "name": "Richards", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-90", "num": "116", "name": "Muñoz", "team": "Crystal Palace", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-91", "num": "117", "name": "Wharton", "team": "Crystal Palace", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-92", "num": "118", "name": "Esse", "team": "Crystal Palace", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-93", "num": "119", "name": "Kamada", "team": "Crystal Palace", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-94", "num": "120", "name": "Eze", "team": "Crystal Palace", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-95", "num": "121", "name": "Sarr", "team": "Crystal Palace", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-96", "num": "122", "name": "Nketiah", "team": "Crystal Palace", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-97", "num": "123", "name": "Mateta", "team": "Crystal Palace", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-6", "num": "124", "name": "Guéhi", "team": "Crystal Palace", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-6", "num": "125", "name": "Mitchell", "team": "Crystal Palace", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-5", "num": "126", "name": "Sarr", "team": "Crystal Palace", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-7", "num": "127", "name": "Team Badge", "team": "Everton", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-98", "num": "128", "name": "Pickford", "team": "Everton", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-99", "num": "129", "name": "Tarkowski", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-100", "num": "130", "name": "Branthwaite", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-101", "num": "131", "name": "Mykolenko", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-102", "num": "132", "name": "O'Brien", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-103", "num": "133", "name": "Patterson", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-104", "num": "134", "name": "Dixon", "team": "Everton", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-105", "num": "135", "name": "Iroegbunam", "team": "Everton", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-106", "num": "136", "name": "Armstrong", "team": "Everton", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-107", "num": "137", "name": "Garner", "team": "Everton", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-108", "num": "138", "name": "McNeil", "team": "Everton", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-109", "num": "139", "name": "Ndiaye", "team": "Everton", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-110", "num": "140", "name": "Beto", "team": "Everton", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-111", "num": "141", "name": "Chermiti", "team": "Everton", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-7", "num": "142", "name": "Ndiaye", "team": "Everton", "pos": "F", "subset": "Generation Now"}, {"id": "Full_Force-7", "num": "143", "name": "Mykolenko", "team": "Everton", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-6", "num": "144", "name": "Ndiaye", "team": "Everton", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-8", "num": "145", "name": "Team Badge", "team": "Fulham", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-112", "num": "146", "name": "Leno", "team": "Fulham", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-113", "num": "147", "name": "Bassey", "team": "Fulham", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-114", "num": "148", "name": "Andersen", "team": "Fulham", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-115", "num": "149", "name": "Berge", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-116", "num": "150", "name": "Robinson", "team": "Fulham", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-117", "num": "151", "name": "Lukić", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-118", "num": "152", "name": "King", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-119", "num": "153", "name": "Pereira", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-120", "num": "154", "name": "Iwobi", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-121", "num": "155", "name": "Smith Rowe", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-122", "num": "156", "name": "Wilson", "team": "Fulham", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-123", "num": "157", "name": "Traoré", "team": "Fulham", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-124", "num": "158", "name": "Muniz", "team": "Fulham", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-125", "num": "159", "name": "Jiménez", "team": "Fulham", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-8", "num": "160", "name": "Muniz", "team": "Fulham", "pos": "F", "subset": "Generation Now"}, {"id": "Full_Force-8", "num": "161", "name": "Bassey", "team": "Fulham", "pos": "D", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-1", "num": "162", "name": "King", "team": "Fulham", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-9", "num": "163", "name": "Champions Badge", "team": "Liverpool FC", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-126", "num": "164", "name": "Becker", "team": "Liverpool FC", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-127", "num": "165", "name": "van Dijk", "team": "Liverpool FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-128", "num": "166", "name": "Konaté", "team": "Liverpool FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-129", "num": "167", "name": "Robertson", "team": "Liverpool FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-130", "num": "168", "name": "Bradley", "team": "Liverpool FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-131", "num": "169", "name": "Gravenberch", "team": "Liverpool FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-132", "num": "170", "name": "Mac Allister", "team": "Liverpool FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-133", "num": "171", "name": "Szoboszlai", "team": "Liverpool FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-134", "num": "172", "name": "Ngumoha", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-135", "num": "173", "name": "Díaz", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-136", "num": "174", "name": "Salah", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-137", "num": "175", "name": "Gakpo", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-138", "num": "176", "name": "Jota", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-139", "num": "177", "name": "Núñez", "team": "Liverpool FC", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-9", "num": "178", "name": "Szoboszlai", "team": "Liverpool FC", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-9", "num": "179", "name": "Núñez", "team": "Liverpool FC", "pos": "F", "subset": "Full Force"}, {"id": "Tekkers-7", "num": "180", "name": "Díaz", "team": "Liverpool FC", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-10", "num": "181", "name": "Team Badge", "team": "Manchester City", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-140", "num": "182", "name": "Ederson", "team": "Manchester City", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-141", "num": "183", "name": "Dias", "team": "Manchester City", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-142", "num": "184", "name": "Gvardiol", "team": "Manchester City", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-143", "num": "185", "name": "Reis", "team": "Manchester City", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-144", "num": "186", "name": "Mukasa", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-145", "num": "187", "name": "González", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-146", "num": "188", "name": "Rodri", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-147", "num": "189", "name": "Doku", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-148", "num": "190", "name": "Foden", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-149", "num": "191", "name": "Silva", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-150", "num": "192", "name": "Sávio", "team": "Manchester City", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-151", "num": "193", "name": "Heskey", "team": "Manchester City", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-152", "num": "194", "name": "Marmoush", "team": "Manchester City", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-153", "num": "195", "name": "Haaland", "team": "Manchester City", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-10", "num": "196", "name": "Doku", "team": "Manchester City", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-10", "num": "197", "name": "Gvardiol", "team": "Manchester City", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-8", "num": "198", "name": "Sávio", "team": "Manchester City", "pos": "M", "subset": "Tekkers"}, {"id": "Team_Badges-11", "num": "199", "name": "Team Badge", "team": "Manchester United", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-154", "num": "200", "name": "Onana", "team": "Manchester United", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-155", "num": "201", "name": "de Ligt", "team": "Manchester United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-156", "num": "202", "name": "Yoro", "team": "Manchester United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-157", "num": "203", "name": "Martínez", "team": "Manchester United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-158", "num": "204", "name": "Dalot", "team": "Manchester United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-159", "num": "205", "name": "Koné", "team": "Manchester United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-160", "num": "206", "name": "Mainoo", "team": "Manchester United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-161", "num": "207", "name": "Ugarte", "team": "Manchester United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-162", "num": "208", "name": "Fernandes", "team": "Manchester United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-163", "num": "209", "name": "Lacey", "team": "Manchester United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-164", "num": "210", "name": "Garnacho", "team": "Manchester United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-165", "num": "211", "name": "Amad", "team": "Manchester United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-166", "num": "212", "name": "Zirkzee", "team": "Manchester United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-167", "num": "213", "name": "Højlund", "team": "Manchester United", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-11", "num": "214", "name": "Mainoo", "team": "Manchester United", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-11", "num": "215", "name": "Ugarte", "team": "Manchester United", "pos": "M", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-2", "num": "216", "name": "Dorgu", "team": "Manchester United", "pos": "D", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-12", "num": "217", "name": "Team Badge", "team": "Newcastle United", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-168", "num": "218", "name": "Pope", "team": "Newcastle United", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-169", "num": "219", "name": "Burn", "team": "Newcastle United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-170", "num": "220", "name": "Botman", "team": "Newcastle United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-171", "num": "221", "name": "Schär", "team": "Newcastle United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-172", "num": "222", "name": "Livramento", "team": "Newcastle United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-173", "num": "223", "name": "Hall", "team": "Newcastle United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-174", "num": "224", "name": "Miley", "team": "Newcastle United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-175", "num": "225", "name": "Tonali", "team": "Newcastle United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-176", "num": "226", "name": "Joelinton", "team": "Newcastle United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-177", "num": "227", "name": "Guimarães", "team": "Newcastle United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-178", "num": "228", "name": "Murphy", "team": "Newcastle United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-179", "num": "229", "name": "Barnes", "team": "Newcastle United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-180", "num": "230", "name": "Gordon", "team": "Newcastle United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-181", "num": "231", "name": "Isak", "team": "Newcastle United", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-12", "num": "232", "name": "Livramento", "team": "Newcastle United", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-12", "num": "233", "name": "Joelinton", "team": "Newcastle United", "pos": "M", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-3", "num": "234", "name": "Miley", "team": "Newcastle United", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-13", "num": "235", "name": "Team Badge", "team": "Nottingham Forest", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-182", "num": "236", "name": "Sels", "team": "Nottingham Forest", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-183", "num": "237", "name": "Milenković", "team": "Nottingham Forest", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-184", "num": "238", "name": "Aina", "team": "Nottingham Forest", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-185", "num": "239", "name": "Murillo", "team": "Nottingham Forest", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-186", "num": "240", "name": "Williams", "team": "Nottingham Forest", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-187", "num": "241", "name": "Abbott", "team": "Nottingham Forest", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-188", "num": "242", "name": "Yates", "team": "Nottingham Forest", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-189", "num": "243", "name": "Sangaré", "team": "Nottingham Forest", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-190", "num": "244", "name": "Anderson", "team": "Nottingham Forest", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-191", "num": "245", "name": "Gibbs-White", "team": "Nottingham Forest", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-192", "num": "246", "name": "Hudson-Odoi", "team": "Nottingham Forest", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-193", "num": "247", "name": "Elanga", "team": "Nottingham Forest", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-194", "num": "248", "name": "Awoniyi", "team": "Nottingham Forest", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-195", "num": "249", "name": "Wood", "team": "Nottingham Forest", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-13", "num": "250", "name": "Murillo", "team": "Nottingham Forest", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-13", "num": "251", "name": "Aina", "team": "Nottingham Forest", "pos": "D", "subset": "Full Force"}, {"id": "Tekkers-9", "num": "252", "name": "Elanga", "team": "Nottingham Forest", "pos": "F", "subset": "Tekkers"}, {"id": "Team_Badges-14", "num": "253", "name": "Team Badge", "team": "Tottenham Hotspur", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-196", "num": "254", "name": "Kinský", "team": "Tottenham Hotspur", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-197", "num": "255", "name": "Porro", "team": "Tottenham Hotspur", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-198", "num": "256", "name": "van de Ven", "team": "Tottenham Hotspur", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-199", "num": "257", "name": "Romero", "team": "Tottenham Hotspur", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-200", "num": "258", "name": "Udogie", "team": "Tottenham Hotspur", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-201", "num": "259", "name": "Gray", "team": "Tottenham Hotspur", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-202", "num": "260", "name": "Kulusevski", "team": "Tottenham Hotspur", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-203", "num": "261", "name": "Bergvall", "team": "Tottenham Hotspur", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-204", "num": "262", "name": "Maddison", "team": "Tottenham Hotspur", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-205", "num": "263", "name": "Lankshear", "team": "Tottenham Hotspur", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-206", "num": "264", "name": "Heung-Min", "team": "Tottenham Hotspur", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-207", "num": "265", "name": "Johnson", "team": "Tottenham Hotspur", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-208", "num": "266", "name": "Moore", "team": "Tottenham Hotspur", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-209", "num": "267", "name": "Solanke", "team": "Tottenham Hotspur", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-14", "num": "268", "name": "Bergvall", "team": "Tottenham Hotspur", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-14", "num": "269", "name": "Moore", "team": "Tottenham Hotspur", "pos": "F", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-4", "num": "270", "name": "Archie Gray", "team": "Tottenham Hotspur", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-15", "num": "271", "name": "Team Badge", "team": "West Ham United", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-210", "num": "272", "name": "Areola", "team": "West Ham United", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-211", "num": "273", "name": "Todibo", "team": "West Ham United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-212", "num": "274", "name": "Kilman", "team": "West Ham United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-213", "num": "275", "name": "Wan-Bissaka", "team": "West Ham United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-214", "num": "276", "name": "Palmieri", "team": "West Ham United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-215", "num": "277", "name": "Scarles", "team": "West Ham United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-216", "num": "278", "name": "Souček", "team": "West Ham United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-217", "num": "279", "name": "Álvarez", "team": "West Ham United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-218", "num": "280", "name": "Rodríguez", "team": "West Ham United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-219", "num": "281", "name": "Kudus", "team": "West Ham United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-220", "num": "282", "name": "Füllkrug", "team": "West Ham United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-221", "num": "283", "name": "Summerville", "team": "West Ham United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-222", "num": "284", "name": "Bowen", "team": "West Ham United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-223", "num": "285", "name": "Guilherme", "team": "West Ham United", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-15", "num": "286", "name": "Summerville", "team": "West Ham United", "pos": "F", "subset": "Generation Now"}, {"id": "Full_Force-15", "num": "287", "name": "Wan-Bissaka", "team": "West Ham United", "pos": "D", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-5", "num": "288", "name": "Guilherme", "team": "West Ham United", "pos": "F", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-16", "num": "289", "name": "Team Badge", "team": "Wolverhampton Wanderers", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-224", "num": "290", "name": "Sá", "team": "Wolverhampton Wanderers", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-225", "num": "291", "name": "Semedo", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-226", "num": "292", "name": "Djiga", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-227", "num": "293", "name": "Agbadou", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-228", "num": "294", "name": "Toti Gomes", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-229", "num": "295", "name": "Aït-Nouri", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-230", "num": "296", "name": "Munetsi", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-231", "num": "297", "name": "André", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-232", "num": "298", "name": "João Gomes", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-233", "num": "299", "name": "Rodrigo Gomes", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-234", "num": "300", "name": "Guedes", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-235", "num": "301", "name": "Hee-Chan", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-236", "num": "302", "name": "Strand Larsen", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-237", "num": "303", "name": "Cunha", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-16", "num": "304", "name": "João Gomes", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-16", "num": "305", "name": "Djiga", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-6", "num": "306", "name": "André", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-17", "num": "307", "name": "Team Badge", "team": "Burnley FC", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-238", "num": "308", "name": "Trafford", "team": "Burnley FC", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-239", "num": "309", "name": "Estève", "team": "Burnley FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-240", "num": "310", "name": "Humphreys", "team": "Burnley FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-241", "num": "311", "name": "Roberts", "team": "Burnley FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-242", "num": "312", "name": "Pires", "team": "Burnley FC", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-243", "num": "313", "name": "Laurent", "team": "Burnley FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-244", "num": "314", "name": "Cullen", "team": "Burnley FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-245", "num": "315", "name": "Brownhill", "team": "Burnley FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-246", "num": "316", "name": "Hannibal", "team": "Burnley FC", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-247", "num": "317", "name": "Edwards", "team": "Burnley FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-248", "num": "318", "name": "Foster", "team": "Burnley FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-249", "num": "319", "name": "Koleosho", "team": "Burnley FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-250", "num": "320", "name": "Anthony", "team": "Burnley FC", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-251", "num": "321", "name": "Banel", "team": "Burnley FC", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-17", "num": "322", "name": "Pires", "team": "Burnley FC", "pos": "D", "subset": "Generation Now"}, {"id": "Full_Force-17", "num": "323", "name": "Cullen", "team": "Burnley FC", "pos": "M", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-7", "num": "324", "name": "Koleosho", "team": "Burnley FC", "pos": "F", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-18", "num": "325", "name": "Team Badge", "team": "Leeds United", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-252", "num": "326", "name": "Meslier", "team": "Leeds United", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-253", "num": "327", "name": "Rodon", "team": "Leeds United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-254", "num": "328", "name": "Struijk", "team": "Leeds United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-255", "num": "329", "name": "Bogle", "team": "Leeds United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-256", "num": "330", "name": "Ampadu", "team": "Leeds United", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-257", "num": "331", "name": "Tanaka", "team": "Leeds United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-258", "num": "332", "name": "Aaronson", "team": "Leeds United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-259", "num": "333", "name": "Gruev", "team": "Leeds United", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-260", "num": "334", "name": "Harry Gray", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-261", "num": "335", "name": "Joseph", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-262", "num": "336", "name": "Gnonto", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-263", "num": "337", "name": "James", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-264", "num": "338", "name": "Bamford", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-265", "num": "339", "name": "Piroe", "team": "Leeds United", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-18", "num": "340", "name": "Joseph", "team": "Leeds United", "pos": "F", "subset": "Generation Now"}, {"id": "Full_Force-18", "num": "341", "name": "Struijk", "team": "Leeds United", "pos": "D", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-8", "num": "342", "name": "Harry Gray", "team": "Leeds United", "pos": "F", "subset": "Breakthrough Ballers"}, {"id": "Team_Badges-19", "num": "343", "name": "Team Badge", "team": "Sunderland", "pos": "", "subset": "Team Badges"}, {"id": "Base_Players-266", "num": "344", "name": "Patterson", "team": "Sunderland", "pos": "GK", "subset": "Base Players"}, {"id": "Base_Players-267", "num": "345", "name": "Hume", "team": "Sunderland", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-268", "num": "346", "name": "Cirkin", "team": "Sunderland", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-269", "num": "347", "name": "O'Nien", "team": "Sunderland", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-270", "num": "348", "name": "Ballard", "team": "Sunderland", "pos": "D", "subset": "Base Players"}, {"id": "Base_Players-271", "num": "349", "name": "Rigg", "team": "Sunderland", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-272", "num": "350", "name": "Neil", "team": "Sunderland", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-273", "num": "351", "name": "Browne", "team": "Sunderland", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-274", "num": "352", "name": "Bellingham", "team": "Sunderland", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-275", "num": "353", "name": "Le Fée", "team": "Sunderland", "pos": "M", "subset": "Base Players"}, {"id": "Base_Players-276", "num": "354", "name": "Mundle", "team": "Sunderland", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-277", "num": "355", "name": "Roberts", "team": "Sunderland", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-278", "num": "356", "name": "Mayenda", "team": "Sunderland", "pos": "F", "subset": "Base Players"}, {"id": "Base_Players-279", "num": "357", "name": "Isidor", "team": "Sunderland", "pos": "F", "subset": "Base Players"}, {"id": "Generation_Now-19", "num": "358", "name": "Bellingham", "team": "Sunderland", "pos": "M", "subset": "Generation Now"}, {"id": "Full_Force-19", "num": "359", "name": "Isidor", "team": "Sunderland", "pos": "F", "subset": "Full Force"}, {"id": "Breakthrough_Ballers-9", "num": "360", "name": "Rigg", "team": "Sunderland", "pos": "M", "subset": "Breakthrough Ballers"}, {"id": "Retro_Threads-0", "num": "381", "name": "Wright", "team": "Arsenal", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-1", "num": "382", "name": "Petrov", "team": "Aston Villa", "pos": "M", "subset": "Retro Threads"}, {"id": "Retro_Threads-2", "num": "383", "name": "Francis", "team": "AFC Bournemouth", "pos": "D", "subset": "Retro Threads"}, {"id": "Retro_Threads-3", "num": "384", "name": "Cantona", "team": "Manchester United", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-4", "num": "385", "name": "Nørgaard", "team": "Brentford", "pos": "M", "subset": "Retro Threads"}, {"id": "Retro_Threads-5", "num": "386", "name": "Glenn Murray", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-6", "num": "387", "name": "Lampard", "team": "Chelsea", "pos": "M", "subset": "Retro Threads"}, {"id": "Retro_Threads-7", "num": "388", "name": "Andrew Johnson", "team": "Crystal Palace", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-8", "num": "389", "name": "Lescott", "team": "Everton", "pos": "D", "subset": "Retro Threads"}, {"id": "Retro_Threads-9", "num": "390", "name": "Saha", "team": "Fulham", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-10", "num": "391", "name": "Carragher", "team": "Liverpool FC", "pos": "D", "subset": "Retro Threads"}, {"id": "Retro_Threads-11", "num": "392", "name": "Micah Richards", "team": "Manchester City", "pos": "D", "subset": "Retro Threads"}, {"id": "Retro_Threads-12", "num": "393", "name": "Gary Neville", "team": "Manchester United", "pos": "D", "subset": "Retro Threads"}, {"id": "Retro_Threads-13", "num": "394", "name": "Asprilla", "team": "Newcastle United", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-14", "num": "395", "name": "Collymore", "team": "Nottingham Forest", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-15", "num": "396", "name": "Robbie Keane", "team": "Tottenham Hotspur", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-16", "num": "397", "name": "Noble", "team": "West Ham United", "pos": "M", "subset": "Retro Threads"}, {"id": "Retro_Threads-17", "num": "398", "name": "Kevin Doyle", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Retro Threads"}, {"id": "Retro_Threads-18", "num": "399", "name": "Aaron Lennon", "team": "Burnley FC", "pos": "M", "subset": "Retro Threads"}, {"id": "Retro_Threads-19", "num": "400", "name": "Hasselbaink", "team": "Leeds United", "pos": "F", "subset": "Retro Threads"}, {"id": "Pro_Precision-0", "num": "401", "name": "Havertz", "team": "Arsenal", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-1", "num": "402", "name": "Watkins", "team": "Aston Villa", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-2", "num": "403", "name": "Ouattara", "team": "AFC Bournemouth", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-3", "num": "404", "name": "Damsgaard", "team": "Brentford", "pos": "M", "subset": "Pro Precision"}, {"id": "Pro_Precision-4", "num": "405", "name": "Welbeck", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-5", "num": "406", "name": "Jackson", "team": "Chelsea", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-6", "num": "407", "name": "Nketiah", "team": "Crystal Palace", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-7", "num": "408", "name": "Beto", "team": "Everton", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-8", "num": "409", "name": "Robbie Fowler", "team": "Liverpool FC", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-9", "num": "410", "name": "Jota", "team": "Liverpool FC", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-10", "num": "411", "name": "Foden", "team": "Manchester City", "pos": "M", "subset": "Pro Precision"}, {"id": "Pro_Precision-11", "num": "412", "name": "Fernandes", "team": "Manchester United", "pos": "M", "subset": "Pro Precision"}, {"id": "Pro_Precision-12", "num": "413", "name": "Rooney", "team": "Manchester United", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-13", "num": "414", "name": "Gordon", "team": "Newcastle United", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-14", "num": "415", "name": "Awoniyi", "team": "Nottingham Forest", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-15", "num": "416", "name": "Brennan Johnson", "team": "Tottenham Hotspur", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-16", "num": "417", "name": "Kudus", "team": "West Ham United", "pos": "M", "subset": "Pro Precision"}, {"id": "Pro_Precision-17", "num": "418", "name": "Strand Larsen", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Pro Precision"}, {"id": "Pro_Precision-18", "num": "419", "name": "Brownhill", "team": "Burnley FC", "pos": "M", "subset": "Pro Precision"}, {"id": "Pro_Precision-19", "num": "420", "name": "Bamford", "team": "Leeds United", "pos": "F", "subset": "Pro Precision"}, {"id": "Beast_Mode-0", "num": "421", "name": "Rice", "team": "Arsenal", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-1", "num": "422", "name": "Rogers", "team": "Aston Villa", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-2", "num": "423", "name": "Evanilson", "team": "AFC Bournemouth", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-3", "num": "424", "name": "Wissa", "team": "Brentford", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-4", "num": "425", "name": "Rutter", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-5", "num": "426", "name": "Fernández", "team": "Chelsea", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-6", "num": "427", "name": "Mateta", "team": "Crystal Palace", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-7", "num": "428", "name": "Beto", "team": "Everton", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-8", "num": "429", "name": "Konaté", "team": "Liverpool FC", "pos": "D", "subset": "Beast Mode"}, {"id": "Beast_Mode-9", "num": "430", "name": "van Dijk", "team": "Liverpool FC", "pos": "D", "subset": "Beast Mode"}, {"id": "Beast_Mode-10", "num": "431", "name": "Rodri", "team": "Manchester City", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-11", "num": "432", "name": "Garnacho", "team": "Manchester United", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-12", "num": "433", "name": "Tonali", "team": "Newcastle United", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-13", "num": "434", "name": "Wood", "team": "Nottingham Forest", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-14", "num": "435", "name": "Ledley King", "team": "Tottenham Hotspur", "pos": "D", "subset": "Beast Mode"}, {"id": "Beast_Mode-15", "num": "436", "name": "Solanke", "team": "Tottenham Hotspur", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-16", "num": "437", "name": "Palmieri", "team": "West Ham United", "pos": "D", "subset": "Beast Mode"}, {"id": "Beast_Mode-17", "num": "438", "name": "Hee-chan", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Beast Mode"}, {"id": "Beast_Mode-18", "num": "439", "name": "Hannibal", "team": "Burnley FC", "pos": "M", "subset": "Beast Mode"}, {"id": "Beast_Mode-19", "num": "440", "name": "Daniel James", "team": "Leeds United", "pos": "F", "subset": "Beast Mode"}, {"id": "Headlines-0", "num": "441", "name": "Ødegaard", "team": "Arsenal", "pos": "M", "subset": "Headlines"}, {"id": "Headlines-1", "num": "442", "name": "Martínez", "team": "Aston Villa", "pos": "GK", "subset": "Headlines"}, {"id": "Headlines-2", "num": "443", "name": "Schade", "team": "Brentford", "pos": "F", "subset": "Headlines"}, {"id": "Headlines-3", "num": "444", "name": "Neto", "team": "Chelsea", "pos": "F", "subset": "Headlines"}, {"id": "Headlines-4", "num": "445", "name": "Pickford", "team": "Everton", "pos": "GK", "subset": "Headlines"}, {"id": "Headlines-5", "num": "446", "name": "Gakpo", "team": "Liverpool FC", "pos": "F", "subset": "Headlines"}, {"id": "Headlines-6", "num": "447", "name": "Doku", "team": "Manchester City", "pos": "M", "subset": "Headlines"}, {"id": "Headlines-7", "num": "448", "name": "Amad", "team": "Manchester United", "pos": "F", "subset": "Headlines"}, {"id": "Headlines-8", "num": "449", "name": "Jacob Murphy", "team": "Newcastle United", "pos": "M", "subset": "Headlines"}, {"id": "Headlines-9", "num": "450", "name": "Maddison", "team": "Tottenham Hotspur", "pos": "M", "subset": "Headlines"}, {"id": "Pro_Partnerships-5", "num": "", "name": "Ouattara", "team": "AFC Bournemouth", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-4", "num": "", "name": "Semenyo", "team": "AFC Bournemouth", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-1", "num": "", "name": "Magalhães", "team": "Arsenal", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-0", "num": "", "name": "Saliba", "team": "Arsenal", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-2", "num": "", "name": "Onana", "team": "Aston Villa", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-3", "num": "", "name": "Tielemans", "team": "Aston Villa", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-6", "num": "", "name": "Collins", "team": "Brentford", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-7", "num": "", "name": "van den Berg", "team": "Brentford", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-9", "num": "", "name": "Adingra", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-8", "num": "", "name": "Mitoma", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-36", "num": "", "name": "Estève", "team": "Burnley FC", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-37", "num": "", "name": "Pires", "team": "Burnley FC", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-12", "num": "", "name": "Caicedo", "team": "Chelsea", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-10", "num": "", "name": "Carvalho", "team": "Chelsea", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-13", "num": "", "name": "Fernández", "team": "Chelsea", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-11", "num": "", "name": "Terry", "team": "Chelsea", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-14", "num": "", "name": "Kamada", "team": "Crystal Palace", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-15", "num": "", "name": "Wharton", "team": "Crystal Palace", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-17", "num": "", "name": "Branthwaite", "team": "Everton", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-16", "num": "", "name": "Tarkowski", "team": "Everton", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-39", "num": "", "name": "Ampadu", "team": "Leeds United", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-38", "num": "", "name": "Rodon", "team": "Leeds United", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-20", "num": "", "name": "Gravenberch", "team": "Liverpool FC", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-21", "num": "", "name": "Mac Allister", "team": "Liverpool FC", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-22", "num": "", "name": "Foden", "team": "Manchester City", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-23", "num": "", "name": "Silva", "team": "Manchester City", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-24", "num": "", "name": "Fernandes", "team": "Manchester United", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-25", "num": "", "name": "Højlund", "team": "Manchester United", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-27", "num": "", "name": "Guimarães", "team": "Newcastle United", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-26", "num": "", "name": "Joelinton", "team": "Newcastle United", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-28", "num": "", "name": "Aina", "team": "Nottingham Forest", "pos": "D", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-29", "num": "", "name": "Hudson-Odoi", "team": "Nottingham Forest", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-18", "num": "", "name": "Le Fée", "team": "Sunderland", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-19", "num": "", "name": "Roberts", "team": "Sunderland", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-32", "num": "", "name": "Anderton", "team": "Tottenham Hotspur", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-30", "num": "", "name": "Johnson", "team": "Tottenham Hotspur", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-31", "num": "", "name": "Kulusevski", "team": "Tottenham Hotspur", "pos": "M", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-33", "num": "", "name": "Sheringham", "team": "Tottenham Hotspur", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-34", "num": "", "name": "Guedes", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Pro_Partnerships-35", "num": "", "name": "Strand Larsen", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Pro Partnerships"}, {"id": "Chrome_Kings-0", "num": "CK1", "name": "Cesc Fàbregas", "team": "Arsenal", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-1", "num": "CK2", "name": "Dwight Yorke", "team": "Aston Villa", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-2", "num": "CK3", "name": "Adam Smith", "team": "AFC Bournemouth", "pos": "D", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-3", "num": "CK4", "name": "Nørgaard", "team": "Brentford", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-4", "num": "CK5", "name": "Dunk", "team": "Brighton & Hove Albion", "pos": "D", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-5", "num": "CK6", "name": "Zola", "team": "Chelsea", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-6", "num": "CK7", "name": "Drogba", "team": "Chelsea", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-7", "num": "CK8", "name": "Clyne", "team": "Crystal Palace", "pos": "D", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-8", "num": "CK9", "name": "Coleman", "team": "Everton", "pos": "D", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-9", "num": "CK10", "name": "Dempsey", "team": "Fulham", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-10", "num": "CK11", "name": "Alonso", "team": "Liverpool FC", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-11", "num": "CK12", "name": "Gerrard", "team": "Liverpool FC", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-12", "num": "CK13", "name": "David Silva", "team": "Manchester City", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-13", "num": "CK14", "name": "Agüero", "team": "Manchester City", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-14", "num": "CK15", "name": "Vidić", "team": "Manchester United", "pos": "D", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-15", "num": "CK16", "name": "Andy Cole", "team": "Newcastle United", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-16", "num": "CK17", "name": "Roy Keane", "team": "Nottingham Forest", "pos": "M", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-17", "num": "CK18", "name": "Bale", "team": "Tottenham Hotspur", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-18", "num": "CK19", "name": "Zamora", "team": "West Ham United", "pos": "F", "subset": "Chrome Kings"}, {"id": "Chrome_Kings-19", "num": "CK20", "name": "Ince", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Chrome Kings"}, {"id": "Gold_Lions-0", "num": "GL1", "name": "Saka", "team": "Arsenal", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-1", "num": "GL2", "name": "Watkins", "team": "Aston Villa", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-2", "num": "GL3", "name": "Evanilson", "team": "AFC Bournemouth", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-3", "num": "GL4", "name": "Mbeumo", "team": "Brentford", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-4", "num": "GL5", "name": "Mitoma", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-5", "num": "GL6", "name": "Palmer", "team": "Chelsea", "pos": "M", "subset": "Gold Lions"}, {"id": "Gold_Lions-6", "num": "GL7", "name": "Hazard", "team": "Chelsea", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-7", "num": "GL8", "name": "Eze", "team": "Crystal Palace", "pos": "M", "subset": "Gold Lions"}, {"id": "Gold_Lions-8", "num": "GL9", "name": "Ndiaye", "team": "Everton", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-9", "num": "GL10", "name": "Amad", "team": "Manchester United", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-10", "num": "GL11", "name": "Salah", "team": "Liverpool FC", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-11", "num": "GL12", "name": "Haaland", "team": "Manchester City", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-12", "num": "GL13", "name": "Garnacho", "team": "Manchester United", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-13", "num": "GL14", "name": "Isak", "team": "Newcastle United", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-14", "num": "GL15", "name": "Gibbs-White", "team": "Nottingham Forest", "pos": "M", "subset": "Gold Lions"}, {"id": "Gold_Lions-15", "num": "GL16", "name": "Heung-Min", "team": "Tottenham Hotspur", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-16", "num": "GL17", "name": "Bowen", "team": "West Ham United", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-17", "num": "GL18", "name": "Cunha", "team": "Wolverhampton Wanderers", "pos": "F", "subset": "Gold Lions"}, {"id": "Gold_Lions-18", "num": "GL19", "name": "Brownhill", "team": "Burnley FC", "pos": "M", "subset": "Gold Lions"}, {"id": "Gold_Lions-19", "num": "GL20", "name": "Tanaka", "team": "Leeds United", "pos": "M", "subset": "Gold Lions"}, {"id": "Perfect_Storm-0", "num": "PS1", "name": "Ødegaard", "team": "Arsenal", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-1", "num": "PS2", "name": "Rogers", "team": "Aston Villa", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-2", "num": "PS3", "name": "Adams", "team": "AFC Bournemouth", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-3", "num": "PS4", "name": "Mbeumo", "team": "Brentford", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-4", "num": "PS5", "name": "Pedro", "team": "Brighton & Hove Albion", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-5", "num": "PS6", "name": "Estêvão", "team": "Chelsea", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-6", "num": "PS7", "name": "Eze", "team": "Crystal Palace", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-7", "num": "PS8", "name": "McNeil", "team": "Everton", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-8", "num": "PS9", "name": "Núñez", "team": "Liverpool FC", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-9", "num": "PS10", "name": "Salah", "team": "Liverpool FC", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-10", "num": "PS11", "name": "Suárez", "team": "Liverpool FC", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-11", "num": "PS12", "name": "Haaland", "team": "Manchester City", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-12", "num": "PS13", "name": "Amad", "team": "Manchester United", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-13", "num": "PS14", "name": "Isak", "team": "Newcastle United", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-14", "num": "PS15", "name": "Elanga", "team": "Nottingham Forest", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-15", "num": "PS16", "name": "Solanke", "team": "Tottenham Hotspur", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-16", "num": "PS17", "name": "Kudus", "team": "West Ham United", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-17", "num": "PS18", "name": "João Gomes", "team": "Wolverhampton Wanderers", "pos": "M", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-18", "num": "PS19", "name": "Koleosho", "team": "Burnley FC", "pos": "F", "subset": "Perfect Storm"}, {"id": "Perfect_Storm-19", "num": "PS20", "name": "Aaronson", "team": "Leeds United", "pos": "M", "subset": "Perfect Storm"}, {"id": "Festive_Freeze-0", "num": "FF1", "name": "Pickford", "team": "Everton", "pos": "GK", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-1", "num": "FF2", "name": "Lamptey", "team": "Brighton & Hove Albion", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-2", "num": "FF3", "name": "Baines", "team": "Everton", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-3", "num": "FF4", "name": "van Dijk", "team": "Liverpool FC", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-4", "num": "FF5", "name": "Estève", "team": "Burnley FC", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-5", "num": "FF6", "name": "Guéhi", "team": "Crystal Palace", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-6", "num": "FF7", "name": "Saka", "team": "Arsenal", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-7", "num": "FF8", "name": "Gerrard", "team": "Liverpool FC", "pos": "M", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-8", "num": "FF9", "name": "Haaland", "team": "Manchester City", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-9", "num": "FF10", "name": "Agüero", "team": "Manchester City", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-10", "num": "FF11", "name": "Wissa", "team": "Brentford", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-11", "num": "FF12", "name": "Adams", "team": "AFC Bournemouth", "pos": "M", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-12", "num": "FF13", "name": "Ballack", "team": "Chelsea", "pos": "M", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-13", "num": "FF14", "name": "Isak", "team": "Newcastle United", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-14", "num": "FF15", "name": "Vidić", "team": "Manchester United", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-15", "num": "FF16", "name": "Amad", "team": "Manchester United", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-16", "num": "FF17", "name": "Minteh", "team": "Brighton & Hove Albion", "pos": "M", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-17", "num": "FF18", "name": "Emile Heskey", "team": "Aston Villa", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-18", "num": "FF19", "name": "Solanke", "team": "Tottenham Hotspur", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-19", "num": "FF20", "name": "Bowen", "team": "West Ham United", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-20", "num": "FF21", "name": "Elanga", "team": "Nottingham Forest", "pos": "F", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-21", "num": "FF22", "name": "Semedo", "team": "Wolverhampton Wanderers", "pos": "D", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-22", "num": "FF23", "name": "Martínez", "team": "Aston Villa", "pos": "GK", "subset": "Festive Freeze"}, {"id": "Festive_Freeze-23", "num": "FF24", "name": "Reece James", "team": "Chelsea", "pos": "D", "subset": "Festive Freeze"}];
+
+(function () {
+  const PERSON_COLORS = ["#e11d48", "#2563eb", "#059669", "#d97706"];
+  const DEFAULT_PEOPLE = ["Adam", "Ben", "Nathan", "Shane"];
+  const CONFIG_KEY = "pl_checklist_supabase_config";
+  const LOCAL_CACHE_KEY = "pl_checklist_supabase_cache";
+  const ROW_ID = "main";
+
+  let people = DEFAULT_PEOPLE.slice();
+  let cardStatus = {};
+  let supabaseClient = null;
+  let channel = null;
+  const pendingWrites = {};
+  let saveTimer = null;
+  let savingPeople = false;
+
+  let searchTerm = "";
+  let filterMode = "all";
+  let clubFilter = "all";
+  let setFilter = "all";
+
+  const peopleRow = document.getElementById("peopleRow");
+  const listBody = document.getElementById("listBody");
+  const colLabels = document.getElementById("colLabels");
+  const overallText = document.getElementById("overallText");
+  const overallFill = document.getElementById("overallFill");
+  const syncFlag = document.getElementById("syncFlag");
+  const searchBox = document.getElementById("searchBox");
+  const filterSelect = document.getElementById("filterSelect");
+  const clubSelect = document.getElementById("clubSelect");
+  const setSelect = document.getElementById("setSelect");
+  const headerCount = document.getElementById("headerCount");
+  const gearBtn = document.getElementById("gearBtn");
+  const setupModal = document.getElementById("setupModal");
+  const supaUrlInput = document.getElementById("supaUrl");
+  const supaKeyInput = document.getElementById("supaKey");
+  const saveConfigBtn = document.getElementById("saveConfigBtn");
+
+  const clubs = Array.from(new Set(CARDS.map(c => c.team))).sort();
+  clubs.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t; opt.textContent = t;
+    clubSelect.appendChild(opt);
+  });
+  const setsSeen = [];
+  CARDS.forEach(c => { if (!setsSeen.includes(c.subset)) setsSeen.push(c.subset); });
+  setsSeen.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    setSelect.appendChild(opt);
+  });
+
+  const totalCards = CARDS.length;
+  headerCount.textContent = totalCards + " cards, ordered by card number \u00b7 filter by club below";
+
+  function getStatus(id) { return cardStatus[id] || [false, false, false, false]; }
+  function initials(name) { return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
+  function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
+
+  // ---------- Local cache (per-device convenience only; Supabase is the source of truth) ----------
+  function loadLocalCache() {
+    try {
+      const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.people) && parsed.people.length === 4) people = parsed.people;
+      if (parsed && parsed.cards && typeof parsed.cards === "object") cardStatus = parsed.cards;
+    } catch (e) {}
+  }
+  function saveLocalCache() {
+    try { localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({ people, cards: cardStatus })); } catch (e) {}
+  }
+
+  // ---------- Config (Supabase URL/key) ----------
+  function loadConfig() {
+    try {
+      const raw = localStorage.getItem(CONFIG_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+  function saveConfig(cfg) {
+    try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+
+  function openSetup() {
+    const cfg = loadConfig();
+    if (cfg) { supaUrlInput.value = cfg.url || ""; supaKeyInput.value = cfg.key || ""; }
+    setupModal.style.display = "flex";
+  }
+  gearBtn.addEventListener("click", openSetup);
+  saveConfigBtn.addEventListener("click", () => {
+    const url = supaUrlInput.value.trim();
+    const key = supaKeyInput.value.trim();
+    if (!url || !key) return;
+    saveConfig({ url, key });
+    setupModal.style.display = "none";
+    initSupabase();
+  });
+
+  // ---------- Rendering ----------
+  function renderPeopleRow() {
+    peopleRow.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      let owned = 0;
+      CARDS.forEach(c => { if (getStatus(c.id)[i]) owned++; });
+      const pct = totalCards ? Math.round((owned / totalCards) * 100) : 0;
+      const chip = document.createElement("div");
+      chip.className = "person-chip";
+      chip.innerHTML =
+        '<div class="person-swatch" style="background:' + PERSON_COLORS[i] + '"></div>' +
+        '<input type="text" maxlength="14" value="' + escapeAttr(people[i]) + '" data-idx="' + i + '">' +
+        '<div class="pct">' + owned + '/' + totalCards + ' (' + pct + '%)</div>';
+      peopleRow.appendChild(chip);
+    }
+    peopleRow.querySelectorAll("input").forEach(inp => {
+      inp.addEventListener("change", (e) => {
+        const idx = parseInt(e.target.dataset.idx, 10);
+        const val = e.target.value.trim() || DEFAULT_PEOPLE[idx];
+        people[idx] = val;
+        savePeople();
+      });
+    });
+  }
+
+  function renderColLabels() {
+    colLabels.innerHTML = "<span></span><span></span>" + people.map((p, i) =>
+      '<span style="color:' + PERSON_COLORS[i] + '">' + escapeHtml(initials(p)) + '</span>').join("");
+  }
+
+  function renderOverall() {
+    const total = totalCards * 4;
+    let owned = 0, complete = 0;
+    CARDS.forEach(c => {
+      const st = getStatus(c.id);
+      st.forEach(v => { if (v) owned++; });
+      if (st.every(v => v)) complete++;
+    });
+    const pct = total ? Math.round((owned / total) * 100) : 0;
+    overallText.textContent = "Group total: " + owned + "/" + total + " ticks \u00b7 " + complete + "/" + totalCards + " cards everyone has";
+    overallFill.style.width = pct + "%";
+  }
+
+  function cardMatches(c) {
+    if (clubFilter !== "all" && c.team !== clubFilter) return false;
+    if (setFilter !== "all" && c.subset !== setFilter) return false;
+    if (searchTerm) {
+      const hay = (c.name + " " + c.team + " " + c.subset).toLowerCase();
+      if (!hay.includes(searchTerm)) return false;
+    }
+    const status = getStatus(c.id);
+    if (filterMode === "missing" && status.every(v => v)) return false;
+    if (filterMode === "complete" && !status.every(v => v)) return false;
+    return true;
+  }
+
+  function renderList() {
+    const visible = CARDS.filter(cardMatches);
+    if (visible.length === 0) {
+      listBody.innerHTML = '<div class="empty-msg">No cards match your filters.</div>';
+      return;
+    }
+    let html = "";
+    visible.forEach(c => {
+      const isBadgeRow = c.subset === "Team Badges";
+      const status = getStatus(c.id);
+      html += '<div class="card-row' + (isBadgeRow ? ' is-badge' : '') + '">';
+      html += '<div class="card-num">' + escapeHtml(c.num || "") + '</div>';
+      html += '<div class="card-name">' + escapeHtml(c.name) + (c.pos ? ' <span style="color:var(--text-dim);font-size:0.62rem;">(' + c.pos + ')</span>' : '') +
+        '<span class="sub-tag"><span class="team-part">' + escapeHtml(c.team) + '</span> &middot; ' + escapeHtml(c.subset) + '</span></div>';
+      status.forEach((v, i) => {
+        html += '<div class="toggle' + (v ? ' on' : '') + '" data-id="' + c.id + '" data-i="' + i + '" style="' + (v ? 'background:' + PERSON_COLORS[i] : '') + '">' + (v ? '&#10003;' : '') + '</div>';
+      });
+      html += '</div>';
+    });
+    listBody.innerHTML = html;
+  }
+
+  function renderAll() {
+    renderPeopleRow();
+    renderColLabels();
+    renderOverall();
+    renderList();
+  }
+
+  function toggleCard(id, i) {
+    const cur = getStatus(id).slice();
+    cur[i] = !cur[i];
+    cardStatus[id] = cur;
+    renderAll();
+    saveLocalCache();
+    queueCardSave();
+  }
+
+  listBody.addEventListener("click", (e) => {
+    const t = e.target.closest(".toggle");
+    if (!t) return;
+    toggleCard(t.dataset.id, parseInt(t.dataset.i, 10));
+  });
+
+  function queueCardSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushCards, 300);
+  }
+
+  async function flushCards() {
+    if (!supabaseClient) return;
+    try {
+      const { error } = await supabaseClient
+        .from("checklist_state")
+        .update({ cards: cardStatus, updated_at: new Date().toISOString() })
+        .eq("id", ROW_ID);
+      if (error) throw error;
+      syncFlag.textContent = "Synced \u2014 shared live with everyone using this checklist";
+    } catch (e) {
+      syncFlag.textContent = "Couldn't reach Supabase \u2014 your tap is saved locally and will sync once reconnected";
+      queueCardSave(); // retry
+    }
+  }
+
+  async function savePeople() {
+    renderAll();
+    saveLocalCache();
+    if (!supabaseClient || savingPeople) return;
+    savingPeople = true;
+    try {
+      const { error } = await supabaseClient
+        .from("checklist_state")
+        .update({ people, updated_at: new Date().toISOString() })
+        .eq("id", ROW_ID);
+      if (error) throw error;
+    } catch (e) {
+      syncFlag.textContent = "Couldn't reach Supabase \u2014 name change saved locally only for now";
+    } finally {
+      savingPeople = false;
+    }
+  }
+
+  searchBox.addEventListener("input", (e) => { searchTerm = e.target.value.trim().toLowerCase(); renderList(); });
+  filterSelect.addEventListener("change", (e) => { filterMode = e.target.value; renderList(); });
+  clubSelect.addEventListener("change", (e) => { clubFilter = e.target.value; renderList(); });
+  setSelect.addEventListener("change", (e) => { setFilter = e.target.value; renderList(); });
+
+  // ---------- Supabase wiring ----------
+  function applyRemoteRow(row) {
+    if (!row) return;
+    if (row.people && Array.isArray(row.people) && row.people.length === 4) people = row.people;
+    if (row.cards && typeof row.cards === "object") cardStatus = row.cards;
+    saveLocalCache();
+    renderAll();
+  }
+
+  async function initSupabase() {
+    const cfg = loadConfig();
+    if (!cfg || !cfg.url || !cfg.key) {
+      syncFlag.textContent = "Not connected \u2014 tap the gear icon above to link your Supabase project";
+      renderAll();
+      return;
+    }
+    try {
+      supabaseClient = window.supabase.createClient(cfg.url, cfg.key);
+
+      // Initial load
+      let { data, error } = await supabaseClient
+        .from("checklist_state")
+        .select("*")
+        .eq("id", ROW_ID)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        // First run: seed the row
+        const { error: insertErr } = await supabaseClient
+          .from("checklist_state")
+          .insert({ id: ROW_ID, people, cards: cardStatus });
+        if (insertErr) throw insertErr;
+      } else {
+        applyRemoteRow(data);
+      }
+
+      syncFlag.textContent = "Synced \u2014 shared live with everyone using this checklist";
+      renderAll();
+
+      // Live updates from other devices
+      channel = supabaseClient
+        .channel("checklist_state_changes")
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "checklist_state", filter: "id=eq." + ROW_ID },
+          (payload) => applyRemoteRow(payload.new)
+        )
+        .subscribe();
+
+      // Fallback poll in case realtime isn't enabled on the table
+      setInterval(async () => {
+        try {
+          const { data: fresh, error: pollErr } = await supabaseClient
+            .from("checklist_state").select("*").eq("id", ROW_ID).maybeSingle();
+          if (!pollErr && fresh) applyRemoteRow(fresh);
+        } catch (e) {}
+      }, 8000);
+
+    } catch (e) {
+      syncFlag.textContent = "Couldn't connect to Supabase \u2014 check the URL/key via the gear icon (using local data for now)";
+      renderAll();
+    }
+  }
+
+  loadLocalCache();
+  renderAll();
+  if (!loadConfig()) { openSetup(); }
+  initSupabase();
+})();
+</script>
+</body>
+</html>
